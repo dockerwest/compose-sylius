@@ -1,0 +1,81 @@
+#!/usr/bin/env sh
+
+init_environment() {
+    cp ./.env-sample ./.env
+
+    USER_ID=$(id -u)
+    GROUP_ID=$(id -g)
+
+    sed -i -e "s/C_UID=1000/C_UID=$USER_ID/g" ./.env
+    sed -i -e "s/C_GID=1000/C_GID=$GROUP_ID/g" ./.env
+
+    echo "Environment initiated."
+    echo "Please update .env file according to your needs. Then start the environment by running ./environment"
+}
+
+uname=$(uname)
+if [ "$uname" = "Linux" ]; then
+    cd "$(dirname "$(readlink -f "$0")")"
+else
+    cd "$(cd "$(dirname "$0")"; pwd -P)"
+fi
+
+# we need some configuration
+if [ -e .env ]; then
+    . "$(pwd)/.env"
+else
+    echo "No config found, running initialisation..."
+    sleep 1
+    init_environment
+    exit 0
+fi
+
+if [ "$1" = "init" ]; then
+    init_environment
+    exit 0
+fi
+
+PATH="$(pwd)/bin:$PATH"
+export PATH
+
+# start dinghy if its not yet up (macOS)
+if which dinghy > /dev/null 2>&1; then
+    if ! dinghy ip > /dev/null 2>&1; then
+        dinghy up
+    fi
+    eval $(dinghy env)
+fi
+
+cd "$APPLICATION"
+
+sessionname=$(echo "$BASEHOST" | sed 's/[^a-zA-Z0-9]//g');
+
+MANAGER=$1
+if [ -z "$MANAGER" ]; then
+    MANAGER="$WINDOW_MANAGER"
+fi
+
+if [ "$MANAGER" = "screen" ]; then
+    screen -r $sessionname
+    if [ "$?" -ne 0 ]; then
+        screen -S $sessionname
+    fi
+elif [ "$MANAGER" = "tmux" ]; then
+    tmux -L $sessionname has-session -t $sessionname
+    if [ $? -ne 0 ]; then
+        tmux -L $sessionname new -s $sessionname
+    else
+        tmux -L $sessionname a -t $sessionname
+    fi
+elif [ "$MANAGER" = "byobu" ]; then
+    byobu -L $sessionname has-session -t $sessionname
+    if [ $? -ne 0 ]; then
+        byobu -L $sessionname new -s $sessionname
+    else
+        byobu -L $sessionname a -t $sessionname
+    fi
+elif [ "$MANAGER" = "shell" ]; then
+    exec $SHELL
+else
+    echo "run $0 [screen|tmux|byobu|shell]"
+fi

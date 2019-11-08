@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+from environment import Environment
+
+currentpath = os.getcwd()
+composepath = os.path.abspath(os.path.dirname(sys.argv[0]) + '/../')
+os.chdir(composepath)
+
+env = Environment(composepath + '/.env')
+
+cmd = [
+    'docker-compose', '-f', env.get_compose_filename(),
+    '-p', env.get_project_name()
+] + sys.argv[1:]
+
+os.execvp(cmd[0], cmd)
