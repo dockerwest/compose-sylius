@@ -46,7 +46,7 @@ else:
         '-e', "DEVELOPMENT=" + env.get('DEVELOPMENT'),
         '-e', "C_UID=" + env.get('C_UID'),
         '-e', "C_GID=" + env.get('C_GID'),
-        'dockerwest/php-symfony:' + env.get('PHPVERSION'),
+        'dockerwest/php-sylius:' + env.get('PHPVERSION'),
         'php'
     ] + sys.argv[1:]
 

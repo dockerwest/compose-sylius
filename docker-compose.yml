@@ -12,6 +12,8 @@ services:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-toor}
       - DOMAIN_NAME=mysql.${BASEHOST:-application.docker}
     command: --innodb-doublewrite=0
+    ports:
+      - "3306:3306"
 
   mailcatcher:
     image: mailhog/mailhog
